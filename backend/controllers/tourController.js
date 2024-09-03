@@ -34,7 +34,8 @@ exports.getAllTours = async (req, res) => {
   } catch(err){
      res.status(400).json({
       status:'fail',
-      message:err
+      message:err,
+      mess:"umbu da pundai"
      })
   }
 };
@@ -43,7 +44,7 @@ exports.getAllTours = async (req, res) => {
 exports.getTour = async (req, res) => {
   try {
 
-    const tour=await Tour.findById(req.params.id)
+    const tour=await Tour.findById(req.params.id)//.populate('guides'); because it is called in tourmodel middleware
     res.status(200).json({
       status: 'success',
       data: {

@@ -1,18 +1,28 @@
 const express = require('express');
 const app = express();
+const rateLimit=require('express-rate-limit');
+const morgon = require('morgan');
+const helmet=require('helmet');
+app.use(express.json()); 
 
-app.use(express.json()); // Middleware to parse JSON
+
+if(process.env.NODE_ENV==='development'){
+    app.use(morgon('dev'));
+}
+
+// Middleware to parse JSON
+const limiter=rateLimit({
+    max:100,
+    windowMs:60 *60 *1000,
+    message:'Too many request from this ip plss try again the hour!'
+});
+
+app.use('/api',limiter);
+
+app.use(helmet())
 
 const tourRouter = require('./routes/tourRoutes'); // Ensure the path is correct
 const userRouter = require('./routes/userRoutes'); // Ensure the path is correct
-
-//work between req and response cycle
-// app.use((req,res,next)=>{
-//     console.log("hello i m from middleware");
-//     // console.log(req.headers);
-//     next();
-// })
-
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 
