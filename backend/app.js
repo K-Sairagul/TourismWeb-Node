@@ -23,8 +23,13 @@ app.use(helmet())
 
 const tourRouter = require('./routes/tourRoutes'); // Ensure the path is correct
 const userRouter = require('./routes/userRoutes'); // Ensure the path is correct
+const reviewRouter=require('./routes/reviewRoutes');
+
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
+
+
 
 
 

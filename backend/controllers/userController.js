@@ -1,5 +1,7 @@
 const User = require("../models/usermodel");
 const AppError = require("./../utils/appError");
+const factoy=require('./handlerFactory');
+
 
 const filterObj=(obj,...allowedFields)=>{
   const newObj={};
@@ -9,15 +11,6 @@ const filterObj=(obj,...allowedFields)=>{
     return newObj       
 }
 
-exports.getAllUsers = async(req, res) => {
-  const user= await User.find()
-    res.status(201).json({
-      status: 'success',
-     data:{
-      user
-     }
-    });
-  };
 
   exports.updateMe=(async(req,res,next)=>{
     //1) create error if user post password.. used for updating user name not password stuffs
@@ -27,8 +20,7 @@ exports.getAllUsers = async(req, res) => {
 
    //2)Filtering fields
     const filterBody= filterObj(req.body,'name','email');
-
-    //updating the fields
+   //updating the fields
     const updateUser= await User.findByIdAndUpdate(req.user.id,filterBody,{
       new:true,
        runValidators:true
@@ -41,28 +33,7 @@ exports.getAllUsers = async(req, res) => {
     })
   });
 
-
-  exports.getUser = (req, res) => {
-    res.status(500).json({
-      status: 'error',
-      message: 'This route is not yet defined!'
-    });
-  };
-
-  exports.createUser = (req, res) => {
-    res.status(500).json({
-      status: 'error',
-      message: 'This route is not yet defined!'
-    });
-  };
-
-  exports.updateUser = (req, res) => {
-    res.status(500).json({
-      status: 'error',
-      message: 'This route is not yet defined!'
-    });
-  };
-
+//making user to inactive
   exports.deleteMe=(async(req,res,next)=>{
     await User.findByIdAndUpdate(req.user.id,{active:false})
 
@@ -71,7 +42,20 @@ exports.getAllUsers = async(req, res) => {
       data:null
     })
   })
-  exports.deleteUser = async(req, res) => {
+
+
+// Do not update password with this
+exports.updateUser = factoy.updateone(User);
+
+exports.deleteUserOne=factoy.deleteOne(User);
+exports.getUser = factoy.getOne(User);
+exports.getAllUsers = factoy.Getall(User);
+
+
+
+
+
+exports.deleteUser = async(req, res) => {
      const deleteuser=await User.deleteMany()
     res.status(201).json({
       status: 'success',

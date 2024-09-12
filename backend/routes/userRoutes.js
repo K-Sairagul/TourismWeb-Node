@@ -1,6 +1,7 @@
 const express = require('express');
 const userController = require('./../controllers/userController');
-const authController= require('./../controllers/authController')
+const authController= require('./../controllers/authController');
+const reviewController=require('./../controllers/reviewController');
 const userRouter = express.Router();
 
 userRouter.post('/signup',authController.signup)
@@ -26,7 +27,7 @@ authController.updatePassword);
 userRouter
   .route('/')
   .get(userController.getAllUsers)
-  .post(userController.createUser);
+  
 
 userRouter
   .route('/:id')
@@ -36,5 +37,9 @@ userRouter
 userRouter
 .route('/')
   .delete(userController.deleteUser);
+
+userRouter.route('/:id')
+.delete(userController.deleteUserOne)
+
 
 module.exports = userRouter;

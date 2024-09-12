@@ -1,19 +1,33 @@
 const express = require('express');
 const tourController = require('../controllers/tourController');
-const authcontroller=require('./../controllers/authController');
+const authController=require('./../controllers/authController');
+// const reviewController=require('./../controllers/reviewController');
+const reviewRouter=require('./../routes/reviewRoutes');
+
 
 const tourRouter = express.Router();
 
 tourRouter
  .route('')
- .get(authcontroller.protect,tourController.getAllTours)
+ .get(authController.protect,tourController.Getalltour)
  .post(tourController.createTour);
 
 tourRouter
  .route('/:id')
  .get(tourController.getTour)
  .patch(tourController.updateTour)
- .delete(authcontroller.protect, authcontroller.restrictTo('admin','lead-guide'),
+ .delete(authController.protect, authController.restrictTo('admin','lead-guide'),
         tourController.deleteTour);
+
+// tourRouter
+// .route('/:tourId/reviews')
+// .post(authController.protect,
+// authController.restrictTo('user'),
+// reviewController.createReview
+// );
+
+
+tourRouter.use('/:reviewTour/reviews',reviewRouter);
+
 
 module.exports = tourRouter;
