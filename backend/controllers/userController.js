@@ -12,6 +12,12 @@ const filterObj=(obj,...allowedFields)=>{
 }
 
 
+exports.getMe=async(req,res,next)=>{
+  req.params.id=req.user.id;
+  next();
+}
+
+
   exports.updateMe=(async(req,res,next)=>{
     //1) create error if user post password.. used for updating user name not password stuffs
     if(req.body.password || req.body.passwordConfirmation){

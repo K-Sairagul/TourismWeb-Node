@@ -9,13 +9,19 @@ const tourRouter = express.Router();
 
 tourRouter
  .route('')
- .get(authController.protect,tourController.Getalltour)
- .post(tourController.createTour);
+ .get(tourController.Getalltour)
+ .post(authController.protect,
+  authController.restrictTo('admin','lead-guide'),
+  tourController.createTour);
 
 tourRouter
  .route('/:id')
  .get(tourController.getTour)
- .patch(tourController.updateTour)
+ 
+ .patch(authController.protect,
+        authController.restrictTo('admin','lead-guide'),
+        tourController.updateTour)
+
  .delete(authController.protect, authController.restrictTo('admin','lead-guide'),
         tourController.deleteTour);
 

@@ -5,6 +5,8 @@ const morgon = require('morgan');
 const helmet=require('helmet');
 app.use(express.json()); 
 
+app.set('view engine', 'pug');
+
 
 if(process.env.NODE_ENV==='development'){
     app.use(morgon('dev'));
