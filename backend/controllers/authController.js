@@ -12,20 +12,25 @@ const signToken=id=>{
 );
 }
 
+
+
 const createSendToken=(user,statusCode,res)=>{
   const token=signToken(user._id)
-  // console.log(process.env.JWT_COOKIES_EXPIRES_IN);
-  
 
 
+  // Setting time and security
   const cookieOptions = {
     expires: new Date(Date.now() + process.env.JWT_COOKIES_EXPIRES_IN * 24 * 60 * 60 * 1000),
     secure: true,
     httpOnly: true
   }
 
+
+//setting weather it is production or not
 if(process.env.NODE_ENV==='production') cookieOptions.secure=true;
 
+
+//setting cookie to the broswer as cache
 res.cookie('jwt',token,cookieOptions)
 // console.log(cookieOptions);
   
@@ -47,6 +52,7 @@ exports.signup= async(req,res,next)=>{
         role:req.body.role,
         name:req.body.name,
         email:req.body.email,
+        photo: req.body.photo,
         password:req.body.password,
         passwordConfirmation:req.body.passwordConfirmation
        
@@ -94,50 +100,48 @@ exports.login=async(req,res,next)=>{
 
 
 exports.protect = async (req, res, next) => {
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  let token;
+  
+  // 1. Check if token is in headers (Bearer token)
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
-    }
-    if (!token) {
+  }
+
+  // 2. Check if token is in cookies (use cookies as fallback)
+  else if (req.cookies.jwt) {
+      token = req.cookies.jwt;
+  }
+
+  // 3. If no token found, send error
+  if (!token) {
       return next(new AppError('You are not logged in. Please log in as a user.', 401));
-    }
-  
-  //   try {
-  
-  //     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  //  } catch (err) {
-  //     console.error('Error verifying token:', err);
-  //     return next(new AppError('Invalid token. Please log in again.', 401));
-  //   }
-
-  //   const freshUser= await User.findById(decoded.id);
-  //   if(!freshUser){
-  //     return next(new AppError('The user does not exizt',401));
-  //   }
-
-  //   next();
-
+  }
 
   try {
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    const currentUser = await User.findById(decoded.id);
-    if (!currentUser) {
-      return next(new AppError('The user belonging to the token does not exist', 401));
-    }
+      // 4. Verify the token
+      const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    if(currentUser.changePasswordAfter(decoded.iat)){
-      return next( new AppError('User recently changed the password! please login again.',401)
-     );
-    }
+      // 5. Check if the user still exists
+      const currentUser = await User.findById(decoded.id);
+      if (!currentUser) {
+          return next(new AppError('The user belonging to this token no longer exists.', 401));
+      }
 
-    //grand access to the protected route
-    req.user=currentUser;
-    next();
+      // 6. Check if user changed password after the token was issued
+      if (currentUser.changePasswordAfter(decoded.iat)) {
+          return next(new AppError('User recently changed the password. Please log in again.', 401));
+      }
+
+      // 7. Grant access to protected route
+      req.user = currentUser;
+      next();
   } catch (err) {
-    console.error('Error verifying token:', err);
-    return next(new AppError('Invalid token. Please log in again.', 401));
+      console.error('Error verifying token:', err);
+      return next(new AppError('Invalid token. Please log in again.', 401));
   }
-  }
+};
+
+  
 
 
   // used to delete tours by admin
@@ -150,6 +154,40 @@ exports.protect = async (req, res, next) => {
     }
 
   };
+
+  exports.isLoggedIn = async (req, res, next) => {
+    if (req.cookies.jwt) {
+      try {
+        const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
+        const currentUser = await User.findById(decoded.id);
+        if (!currentUser) {
+          return next();
+        }
+        if (currentUser.changePasswordAfter(decoded.iat)) {
+          return next();
+        }
+        res.locals.user = currentUser;
+        return next();
+      } catch (err) {
+        return next();
+      }
+    }
+    next();  // Always call next to pass control to the next middleware
+  };
+  
+    
+  
+  
+    // used to delete tours by admin
+    exports.restrictTo=(...roles)=>{
+      return(req,res,next)=>{
+        if(!roles.includes(req.user.role)){
+          return next(new AppError("you need permission to perform this action",403));
+        }
+        next();
+      }
+  
+    };
 
 
 // 2.forgot password and resetToken part

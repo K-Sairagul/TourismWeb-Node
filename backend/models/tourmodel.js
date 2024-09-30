@@ -142,6 +142,7 @@ tourSchema.pre('save', function(next) {
   next();
 });
 
+
 //Here connecting Tour id with user document
 // tourSchema.pre('save',async function(next){
 //   const guidesPromises=this.guides.map(async id=>await User.findById(id));
