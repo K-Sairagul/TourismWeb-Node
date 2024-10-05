@@ -20,14 +20,29 @@ export const login = async (email, password) => {
             window.setTimeout(() => {
                 location.assign('/');
             }, 1500);
-        } else {
-            // Handle other non-success statuses in the response
-            const message = res.data.message || 'Login failed, please try again.';
-            showAlert('error', message);
-        }
+        } 
     } catch (err) {
         // Handle cases where the error object might not have response or message fields
-        const message = 'An error occurred, please try again.';
+         const message = err.response.data.message
         showAlert('error', message);
     }
 };
+
+export const  logout=async()=>{
+    try {
+
+        const res= await axios({
+            method:'GET',
+            url:'http://127.0.0.1:3000/api/v1/users/logout',
+        })
+
+        if(res.data.status=='success') location.reload(true);
+        
+    } catch (error) {
+
+        showAlert('error', 'Error logging out! Try again.')
+        console.log(error.message);
+        
+        
+    }
+}

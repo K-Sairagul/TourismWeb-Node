@@ -24,7 +24,7 @@ exports.deleteOne=Model=>async(req, res) => {
   };
 
 
-exports.updateone =Model=> async(req, res) => {
+  exports.updateone =Model=> async(req, res) => {
     try {
   
       const doc= await Model.findByIdAndUpdate(req.params.id, req.body,{

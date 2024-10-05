@@ -5,6 +5,8 @@ block append head
   link(href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet')
   
 
+  
+
 block content
   // The rest of your template follows
   section.section-header
@@ -105,4 +107,8 @@ block content
       .cta__content
         h2.heading-secondary Ready for an Unforgettable Adventure?
         p.cta__text=`${tour.duration} days. 1 adventure. Infinite memories. Make this journey yours today!`
-        button.btn.btn--green.span-all-rows Book Your Tour Now!
+        if user
+          button.btn.btn--green.span-all-rows#book-tour(data-tour-id=`${tour.id}`) Book Your Tour Now!
+        else 
+          a.btn.btn--green.span-all-rows(href='/login ') Login to book tour!
+          

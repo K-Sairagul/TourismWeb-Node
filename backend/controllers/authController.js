@@ -1,7 +1,7 @@
 const User= require("./../models/usermodel");
 const {promisify}=require('util');
 const jwt=require('jsonwebtoken');
-const sendEmail= require('./../utils/email');
+const Email= require('./../utils/email');
 const AppError = require("./../utils/appError");
 const crypto=require('crypto');
 
@@ -57,11 +57,10 @@ exports.signup= async(req,res,next)=>{
         passwordConfirmation:req.body.passwordConfirmation
        
     });
-
-    createSendToken(newUser,201,res);
-  
-
-   
+    const url=`${req.protocol}://${req.get('host')}/me`
+    console.log(url);
+    await new Email(newUser,url).sendWelcome()
+    createSendToken(newUser,201,res); 
 
 }  
 catch(err){
@@ -91,14 +90,23 @@ exports.login=async(req,res,next)=>{
         return next(new AppError("Enter the crt pass or email",401))
     }
 
-   
-
-
     // if the passwords are crt it move here
     createSendToken(user,200,res);
+};
+
+
+//Logout thing
+exports.logout=(req,res)=>{
+  res.cookie('jwt','loggedout',{
+    expires:new Date(Date.now()+10*1000),
+    httpOnly:true
+  });
+
+  res.status(200).json({status:'success'})
 }
 
 
+//Protecting this by using bearear token
 exports.protect = async (req, res, next) => {
   let token;
   
@@ -134,11 +142,36 @@ exports.protect = async (req, res, next) => {
 
       // 7. Grant access to protected route
       req.user = currentUser;
+      res.locals.user = currentUser;
+
       next();
   } catch (err) {
       console.error('Error verifying token:', err);
       return next(new AppError('Invalid token. Please log in again.', 401));
   }
+  
+};
+
+
+//Checking weather it is user or not
+exports.isLoggedIn = async (req, res, next) => {
+  if (req.cookies.jwt) {
+    try {
+      const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
+      const currentUser = await User.findById(decoded.id);
+      if (!currentUser) {
+        return next();
+      }
+      if (currentUser.changePasswordAfter(decoded.iat)) {
+        return next();
+      }
+      res.locals.user = currentUser;
+      return next();
+    } catch (err) {
+      return next();
+    }
+  }
+  next();  // Always call next to pass control to the next middleware
 };
 
   
@@ -155,40 +188,7 @@ exports.protect = async (req, res, next) => {
 
   };
 
-  exports.isLoggedIn = async (req, res, next) => {
-    if (req.cookies.jwt) {
-      try {
-        const decoded = await promisify(jwt.verify)(req.cookies.jwt, process.env.JWT_SECRET);
-        const currentUser = await User.findById(decoded.id);
-        if (!currentUser) {
-          return next();
-        }
-        if (currentUser.changePasswordAfter(decoded.iat)) {
-          return next();
-        }
-        res.locals.user = currentUser;
-        return next();
-      } catch (err) {
-        return next();
-      }
-    }
-    next();  // Always call next to pass control to the next middleware
-  };
-  
-    
-  
-  
-    // used to delete tours by admin
-    exports.restrictTo=(...roles)=>{
-      return(req,res,next)=>{
-        if(!roles.includes(req.user.role)){
-          return next(new AppError("you need permission to perform this action",403));
-        }
-        next();
-      }
-  
-    };
-
+ 
 
 // 2.forgot password and resetToken part
   exports.forgotPassword=async(req,res,next) => {
@@ -202,16 +202,10 @@ exports.protect = async (req, res, next) => {
     const resetToken = user.createResetPasswordToken();
     await user.save({ validateBeforeSave: false });
     
-    const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
-    
-    const message = `Forgot your password? Submit a PATCH request with your new password and password confirmation to: ${resetURL}.\nIf you didn't forget your password, please ignore this email.`;
     
     try {
-      await sendEmail({
-        email: user.email,
-        subject: 'Your password reset token (valid for 10 minutes)',
-        message,
-      });
+    const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword/${resetToken}`;
+    await new Email(user,resetURL).sendPasswordReset()
     
       res.status(200).json({
         status: 'success',

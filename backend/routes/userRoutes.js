@@ -6,6 +6,7 @@ const userRouter = express.Router();
 
 userRouter.post('/signup',authController.signup)
 userRouter.post('/login',authController.login)
+userRouter.get('/logout',authController.logout)
 userRouter.post('/forgotpassword',authController.forgotPassword);
 userRouter.patch('/resetpassword/:token',authController.resetPassword);
 
@@ -19,6 +20,8 @@ userRouter.patch('/updateMyPassword',
 authController.updatePassword);
 
 userRouter.patch('/updateMe',
+userController.uploadUserPhoto,
+
 userController.updateMe);
 
 userRouter.delete('/deleteMe',
