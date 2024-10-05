@@ -75,5 +75,8 @@
   "license": "ISC",
   "optionalDependencies": {
     "@img/sharp-win32-x64": "^0.33.5"
+  },
+  "engines":{
+    "node":">=10.0.0"
   }
 }
