@@ -6154,6 +6154,59 @@ const logout = async () => {
   }
 };
 exports.logout = logout;
+},{"axios":"../../node_modules/axios/index.js","./alert":"alert.js"}],"signup.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.signup = exports.default = void 0;
+var _axios = _interopRequireDefault(require("axios"));
+var _alert = require("./alert");
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+/* eslint-disable */
+
+const signup = async (name, email, password, passwordConfirmation) => {
+  console.log(name, password, email, passwordConfirmation);
+  try {
+    const res = await (0, _axios.default)({
+      method: 'POST',
+      url: 'http://127.0.0.1:3000/api/v1/users/signup',
+      data: {
+        name,
+        email,
+        password,
+        passwordConfirmation
+      }
+    });
+
+    // Handle the success case if the response contains 'success' in the status
+    if (res.data.status === 'success') {
+      (0, _alert.showAlert)('success', 'User created successfully');
+      window.setTimeout(() => {
+        location.assign('/');
+      }, 1500);
+    }
+  } catch (err) {
+    // Improved error handling
+    let message = 'An error occurred'; // Default error message
+
+    // Check if err.response exists
+    if (err.response) {
+      // If there's a response, try to get the message from it
+      message = err.response.data.message || message; // Fallback to default message
+    } else if (err.request) {
+      // If there's no response, the request was made but no response was received
+      message = 'No response from server';
+    } else {
+      // Other errors (like setting up the request)
+      message = err.message || message;
+    }
+    (0, _alert.showAlert)('error', message);
+  }
+};
+exports.signup = signup;
+var _default = exports.default = signup;
 },{"axios":"../../node_modules/axios/index.js","./alert":"alert.js"}],"../../node_modules/core-js/internals/global-this.js":[function(require,module,exports) {
 var global = arguments[3];
 'use strict';
@@ -24091,15 +24144,18 @@ exports.bookTour = bookTour;
 "use strict";
 
 var _login = require("./login");
+var _signup = _interopRequireDefault(require("./signup"));
 require("core-js/stable");
 require("regenerator-runtime/runtime");
 var _mapBox = require("./mapBox");
 var _updateSettings = require("./updateSettings");
 var _stripe = require("./stripe");
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 // import '@babel/polyfill'
 
 //Login purpose
 const loginForm = document.querySelector('.form--login');
+const signupForm = document.querySelector('.form--signup');
 const mapBox = document.getElementById('map');
 const userDataForm = document.querySelector('.form-user-data');
 const userPasswordForm = document.querySelector('.form-user-password');
@@ -24108,17 +24164,30 @@ if (mapBox) {
   const locations = JSON.parse(mapBox.dataset.locations);
   (0, _mapBox.Map)(locations);
 }
+
+// Assuming signupForm and loginForm are already defined
+if (signupForm) {
+  signupForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('signupName').value; // Updated ID
+    const email = document.getElementById('signupEmail').value; // Updated ID
+    const password = document.getElementById('signupPassword').value; // Updated ID
+    const passwordConfirmation = document.getElementById('signupPasswordConfirmation').value; // Updated ID
+    (0, _signup.default)(name, email, password, passwordConfirmation);
+  });
+} else {
+  console.log('Failed to send signup data');
+}
 if (loginForm) {
   loginForm.addEventListener('submit', e => {
     e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = document.getElementById('loginEmail').value; // Updated ID
+    const password = document.getElementById('loginPassword').value; // Updated ID
     (0, _login.login)(email, password);
   });
 } else {
   console.error('Form element not found!');
 }
-;
 
 // This thing is used for logut purpose...
 document.addEventListener('DOMContentLoaded', () => {
@@ -24161,7 +24230,7 @@ if (bookBtn) bookBtn.addEventListener('click', e => {
   } = e.target.dataset;
   (0, _stripe.bookTour)(tourId);
 });
-},{"./login":"login.js","core-js/stable":"../../node_modules/core-js/stable/index.js","regenerator-runtime/runtime":"../../node_modules/regenerator-runtime/runtime.js","./mapBox":"mapBox.js","./updateSettings":"updateSettings.js","./stripe":"stripe.js"}],"../../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./login":"login.js","./signup":"signup.js","core-js/stable":"../../node_modules/core-js/stable/index.js","regenerator-runtime/runtime":"../../node_modules/regenerator-runtime/runtime.js","./mapBox":"mapBox.js","./updateSettings":"updateSettings.js","./stripe":"stripe.js"}],"../../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -24186,7 +24255,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60378" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63343" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

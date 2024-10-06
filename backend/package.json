@@ -47,7 +47,7 @@
     "eject": "react-scripts eject",
     "debug": "ndb index.js",
     "man": "nodemon index.js",
-    "start:prod": "cross-env NODE_ENV=production nodemon index.js",
+    "start:prod": " NODE_ENV=production nodemon index.js",
     "watch:js": "parcel watch ./public/js/in.js --out-dir ./public/js --out-file bundle.js",
     "build:js": "parcel watch ./public/js/in.js --out-dir ./public/js --out-file bundle.js"
   },

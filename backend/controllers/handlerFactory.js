@@ -71,13 +71,13 @@ exports.CreateOne=Model=>async (req, res) => {
 
 exports.Getall=Model=>async (req, res) => {
   try{
-    const doc= await Model.find()
+    const docs= await Model.find()
     res.status(200).json({
       status: 'success',
       message:'All the data fetched successfully',
-      results: doc.length,
+      results: docs.length,
       data: {
-        doc
+        docs
       }
     });
   } catch(err){

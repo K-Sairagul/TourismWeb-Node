@@ -1,4 +1,5 @@
 import {login,logout} from './login'
+import signup from './signup';
 // import '@babel/polyfill'
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
@@ -8,8 +9,10 @@ import {bookTour} from './stripe'
 
 
 
+
 //Login purpose
 const loginForm = document.querySelector('.form--login');
+const signupForm=document.querySelector('.form--signup');
 const mapBox=document.getElementById('map');
 const userDataForm = document.querySelector('.form-user-data');
 const userPasswordForm = document.querySelector('.form-user-password');
@@ -20,19 +23,35 @@ const bookBtn=document.getElementById('book-tour')
   if(mapBox){
       const locations=JSON.parse(mapBox.dataset.locations);
       Map(locations);
-    }
+  }
 
-    if (loginForm) {
-      loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        login(email, password);
-      });
-    } else {
-      console.error('Form element not found!');
-    };
- 
+
+
+ // Assuming signupForm and loginForm are already defined
+if (signupForm) {
+  signupForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('signupName').value; // Updated ID
+    const email = document.getElementById('signupEmail').value; // Updated ID
+    const password = document.getElementById('signupPassword').value; // Updated ID
+    const passwordConfirmation = document.getElementById('signupPasswordConfirmation').value; // Updated ID
+    signup(name, email, password, passwordConfirmation);
+  });
+} else {
+  console.log('Failed to send signup data');
+}
+
+if (loginForm) {
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value; // Updated ID
+    const password = document.getElementById('loginPassword').value; // Updated ID
+    login(email, password);
+  });
+} else {
+  console.error('Form element not found!');
+}
+
 
 // This thing is used for logut purpose...
     document.addEventListener('DOMContentLoaded', () => {
@@ -44,6 +63,7 @@ const bookBtn=document.getElementById('book-tour')
       console.error('Logout button not found!');
     }
   });
+
 
 
   if(userDataForm)
@@ -59,6 +79,8 @@ const bookBtn=document.getElementById('book-tour')
      updateSettings(form,'data')
 
   })
+
+
 
 
   if(userPasswordForm)
@@ -79,6 +101,8 @@ const bookBtn=document.getElementById('book-tour')
      document.getElementById('password-confirm').value='';
 
   })
+
+  
 
   if(bookBtn)
     bookBtn.addEventListener('click',e=>{
