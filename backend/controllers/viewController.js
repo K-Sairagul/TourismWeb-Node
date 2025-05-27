@@ -1,5 +1,5 @@
-const Tour = require('../models/tourModel');
-const User = require('../models/userModel');
+const Tour = require('../models/tourmodel');
+const User = require('../models/usermodel');
 
 const Bookings = require('../models/bookingModel');
 const AppError = require('../utils/appError');

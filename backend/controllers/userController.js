@@ -1,4 +1,4 @@
-const User = require("../models/userModel");
+const User = require("../models/usermodel");
 const AppError = require("./../utils/appError");
 const multer=require('multer');
 // const sharp= require('sharp');

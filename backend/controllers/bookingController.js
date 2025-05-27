@@ -1,7 +1,7 @@
 const stripePackage = require('stripe');
 const Tour = require('../models/tourmodel');
 const Booking = require('../models/bookingModel');
-const User = require('../models/userModel');
+const User = require('../models/usermodel');
 const factory = require('./handlerFactory');
 const AppError = require('../utils/appError');
 
