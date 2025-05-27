@@ -56,6 +56,9 @@ const tourSchema = new mongoose.Schema(
         message: 'Discount price ({VALUE}) should be below regular price'
       }
     },
+
+   
+
     summary: {
       type: String,
       trim: true,
@@ -191,6 +194,7 @@ tourSchema.post(/^find/, function(docs, next) {
 //   next();
 // });
 
-const Tour = mongoose.model('Tour', tourSchema);
+const Tour = mongoose.models.Tour || mongoose.model('Tour', tourSchema);
 
 module.exports = Tour;
+

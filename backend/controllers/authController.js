@@ -1,4 +1,4 @@
-const User= require("./../models/usermodel");
+const User= require("./../models/userModel");
 const {promisify}=require('util');
 const jwt=require('jsonwebtoken');
 const Email= require('./../utils/email');
@@ -12,98 +12,96 @@ const signToken=id=>{
 );
 }
 
+// Modify createSendToken to handle redirects
+const createSendToken = (user, statusCode, res, redirectPath = null) => {
+  const token = signToken(user._id);
+  
+ const cookieOptions = {
+  expires: new Date(
+    Date.now() + process.env.JWT_COOKIES_EXPIRES_IN * 24 * 60 * 60 * 1000
+  ),
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+  secure: process.env.NODE_ENV === 'production'
+};
 
+  res.cookie('jwt', token, cookieOptions);
 
-const createSendToken=(user,statusCode,res)=>{
-  const token=signToken(user._id)
+  // Remove password from output
+  user.password = undefined;
 
-
-  // Setting time and security
-  const cookieOptions = {
-    expires: new Date(Date.now() + process.env.JWT_COOKIES_EXPIRES_IN * 24 * 60 * 60 * 1000),
-    secure: true,
-    httpOnly: true
+  if (redirectPath) {
+    return res.redirect(redirectPath);
   }
 
-
-//setting weather it is production or not
-if(process.env.NODE_ENV==='production') cookieOptions.secure=true;
-
-
-//setting cookie to the broswer as cache
-res.cookie('jwt',token,cookieOptions)
-// console.log(cookieOptions);
-  
-
   res.status(statusCode).json({
-      status:'success',
-      token,
-      data:{
-          user
-      }
-   })
-}
-
-//User Creating process
-exports.signup= async(req,res,next)=>{
- try{
-
-    const newUser= await User.create({
-        role:req.body.role,
-        name:req.body.name,
-        email:req.body.email,
-        photo: req.body.photo,
-        password:req.body.password,
-        passwordConfirmation:req.body.passwordConfirmation
-       
-    });
-    const url=`${req.protocol}://${req.get('host')}/me`
-    console.log(url);
-    await new Email(newUser,url).sendWelcome()
-    createSendToken(newUser,201,res); 
-
-}  
-catch(err){
-    console.error('Error during user creation:', err);
-    res.status(400).json({
-        
-        status: 'fail',
-        message: "There is an error in creating user",
-        error: err.message // Include the actual error message for more details
-      });
-}
-}
-
-
-//Login process
-exports.login=async(req,res,next)=>{
-    const{email,password}=req.body
-
-    //checking weather the password or email is there are not
-    // if(!email || !password){
-    //   return next(new AppError( "please provide password or email while login!",400));
-    // }
-
-    // checking weather the user password and mail id are crt
-    const user= await User.findOne({email}).select('+password');
-    if(!user || !(await user.correctPassword(password,user.password))){
-        return next(new AppError("Enter the crt pass or email",401))
+    status: 'success',
+    token,
+    data: {
+      user
     }
+  });
+};
 
-    // if the passwords are crt it move here
-    createSendToken(user,200,res);
+exports.signup = async (req, res, next) => {
+  try {
+    const newUser = await User.create({
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+      passwordConfirmation: req.body.passwordConfirmation
+    });
+
+    const url = `${req.protocol}://${req.get('host')}/me`;
+    try {
+      await new Email(newUser, url).sendWelcome();
+    } catch (emailErr) {
+      console.error('Email failed:', emailErr);
+      // Continue even if email fails
+    }
+    
+    createSendToken(newUser, 201, res);
+  } catch (err) {
+    console.error('Signup error:', err);
+    res.status(400).json({
+      status: 'fail',
+      message: err.message
+    });
+  }
 };
 
 
-//Logout thing
-exports.logout=(req,res)=>{
-  res.cookie('jwt','loggedout',{
-    expires:new Date(Date.now()+10*1000),
-    httpOnly:true
-  });
+exports.login = async (req, res, next) => {
+  const { email, password } = req.body;
 
-  res.status(200).json({status:'success'})
-}
+  // 1) Check if email and password exist
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password!', 400));
+  }
+
+  // 2) Check if user exists && password is correct
+  const user = await User.findOne({ email }).select('+password');
+
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
+
+  // 3) If everything ok, send token to client
+  createSendToken(user, 200, res);
+};
+
+//Logout thing
+// In authController.js
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+    secure: false, // or true if using HTTPS
+    sameSite: 'Lax'
+  });
+  res.status(200).json({ status: 'success' });
+};
+
 
 
 //Protecting this by using bearear token
@@ -143,6 +141,7 @@ exports.protect = async (req, res, next) => {
       // 7. Grant access to protected route
       req.user = currentUser;
       res.locals.user = currentUser;
+      console.log('Current User:', currentUser);
 
       next();
   } catch (err) {

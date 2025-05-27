@@ -1,7 +1,7 @@
 const Apperror = require('./../utils/appError');
 
 
-exports.deleteOne=Model=>async(req, res) => {
+exports.DeleteOne=Model=>async(req, res) => {
     try {
   
     await Model.findByIdAndDelete(req.params.id)
@@ -24,7 +24,7 @@ exports.deleteOne=Model=>async(req, res) => {
   };
 
 
-  exports.updateone =Model=> async(req, res) => {
+  exports.UpdateOne =Model=> async(req, res) => {
     try {
   
       const doc= await Model.findByIdAndUpdate(req.params.id, req.body,{
@@ -69,7 +69,7 @@ exports.CreateOne=Model=>async (req, res) => {
 
 
 
-exports.Getall=Model=>async (req, res) => {
+exports.GetAll=Model=>async (req, res) => {
   try{
     const docs= await Model.find()
     res.status(200).json({
@@ -90,7 +90,7 @@ exports.Getall=Model=>async (req, res) => {
 };
 
 
-exports.getOne=(Model,popOptions)=>async (req, res) => {
+exports.GetOne=(Model,popOptions)=>async (req, res) => {
   let query=Model.findById(req.params.id);
   if(popOptions) query=query.populate(popOptions);
   const doc= await query

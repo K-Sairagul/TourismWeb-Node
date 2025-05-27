@@ -1,13 +1,13 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const Tour = require('./../../models/tourmodel');
+const Tour = require('./../../models/tourModel');
 const Review = require('./../../models/reviewModel');
-const User = require('./../../models/usermodel');
+const User = require('./../../models/userModel');
 
 
 
-const DB = 'mongodb+srv://sai:sai123456@cluster0.lezu93y.mongodb.net/sai?retryWrites=true&w=majority&appName=Cluster0';
+const DB = 'mongodb+srv://sairagulkdeveloper:sai2727@clustertourbooking.j40iqyw.mongodb.net/';
 console.log('MONGO_URI:', DB); // or process.env.MONGO_URI if using the .env file
 
 

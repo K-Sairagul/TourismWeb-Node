@@ -24,6 +24,11 @@ const bookingSchema = new mongoose.Schema({
         default: Date.now
     },
 
+    likes: {
+        type: Number,
+        default: 0
+      },
+    
     paid: {
         type: Boolean,
         default: true

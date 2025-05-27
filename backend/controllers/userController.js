@@ -1,4 +1,4 @@
-const User = require("../models/usermodel");
+const User = require("../models/userModel");
 const AppError = require("./../utils/appError");
 const multer=require('multer');
 // const sharp= require('sharp');
@@ -82,11 +82,11 @@ exports.getMe=async(req,res,next)=>{
 
 
 // Do not update password with this
-exports.updateUser = factoy.updateone(User);
+exports.updateUser = factoy.UpdateOne(User);
 
-exports.deleteUserOne=factoy.deleteOne(User);
-exports.getUser = factoy.getOne(User);
-exports.getAllUsers = factoy.Getall(User);
+exports.deleteUserOne=factoy.DeleteOne(User);
+exports.getUser = factoy.GetOne(User);
+exports.getAllUsers = factoy.GetAll(User);
 
 
 

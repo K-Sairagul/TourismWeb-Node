@@ -6116,18 +6116,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /* eslint-disable */
 
 const login = async (email, password) => {
-  console.log(email, password);
   try {
     const res = await (0, _axios.default)({
       method: 'POST',
-      url: 'http://127.0.0.1:3000/api/v1/users/login',
+      url: 'http://localhost:3000/api/v1/users/login',
       data: {
         email,
         password
-      }
+      },
+      withCredentials: true
     });
-
-    // Handle the success case if the response contains 'success' in the status
     if (res.data.status === 'success') {
       (0, _alert.showAlert)('success', 'Logged in successfully');
       window.setTimeout(() => {
@@ -6135,9 +6133,7 @@ const login = async (email, password) => {
       }, 1500);
     }
   } catch (err) {
-    // Handle cases where the error object might not have response or message fields
-    const message = err.response.data.message;
-    (0, _alert.showAlert)('error', message);
+    (0, _alert.showAlert)('error', err.response?.data?.message || 'Login failed');
   }
 };
 exports.login = login;
@@ -6145,9 +6141,16 @@ const logout = async () => {
   try {
     const res = await (0, _axios.default)({
       method: 'GET',
-      url: 'http://127.0.0.1:3000/api/v1/users/logout'
+      url: 'http://localhost:3000/api/v1/users/logout',
+      // Use 'localhost' to match cookie domain
+      withCredentials: true
     });
-    if (res.data.status == 'success') location.reload(true);
+    if (res.data.status === 'success') {
+      (0, _alert.showAlert)('success', 'Logged out successfully!');
+      window.setTimeout(() => {
+        location.assign('/'); // 👈 Redirect to login page
+      }, 1000);
+    }
   } catch (error) {
     (0, _alert.showAlert)('error', 'Error logging out! Try again.');
     console.log(error.message);
@@ -6164,45 +6167,38 @@ exports.signup = exports.default = void 0;
 var _axios = _interopRequireDefault(require("axios"));
 var _alert = require("./alert");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-/* eslint-disable */
-
 const signup = async (name, email, password, passwordConfirmation) => {
-  console.log(name, password, email, passwordConfirmation);
   try {
     const res = await (0, _axios.default)({
       method: 'POST',
-      url: 'http://127.0.0.1:3000/api/v1/users/signup',
+      url: 'http://localhost:3000/api/v1/users/signup',
+      // Use relative URL
       data: {
         name,
         email,
         password,
         passwordConfirmation
-      }
+      },
+      timeout: 10000,
+      // 10 second timeout
+      withCredentials: true
     });
-
-    // Handle the success case if the response contains 'success' in the status
     if (res.data.status === 'success') {
-      (0, _alert.showAlert)('success', 'User created successfully');
+      (0, _alert.showAlert)('success', 'Account created successfully!');
       window.setTimeout(() => {
         location.assign('/');
       }, 1500);
+      return true; // Explicit return
     }
   } catch (err) {
-    // Improved error handling
-    let message = 'An error occurred'; // Default error message
+    console.error('Signup error:', err);
+    let errorMsg = err.response?.data?.message || err.message || 'Signup failed. Please try again.';
 
-    // Check if err.response exists
-    if (err.response) {
-      // If there's a response, try to get the message from it
-      message = err.response.data.message || message; // Fallback to default message
-    } else if (err.request) {
-      // If there's no response, the request was made but no response was received
-      message = 'No response from server';
-    } else {
-      // Other errors (like setting up the request)
-      message = err.message || message;
+    // Handle timeout specifically
+    if (err.code === 'ECONNABORTED') {
+      errorMsg = 'Request timeout. Please check your connection.';
     }
-    (0, _alert.showAlert)('error', message);
+    throw new Error(errorMsg); // Re-throw for form handler
   }
 };
 exports.signup = signup;
@@ -24045,13 +24041,25 @@ Object.defineProperty(exports, "__esModule", {
 exports.Map = void 0;
 /* eslint-disable */
 const Map = locations => {
+  // 1. Set Mapbox access token
   mapboxgl.accessToken = 'pk.eyJ1Ijoic2FpcmFndWwiLCJhIjoiY20xaHIxdmEwMGZsODJpczhzNHQyczBhdyJ9._jU_4PB4VJiQRzBYEZrAyg';
-  var map = new mapboxgl.Map({
+
+  // 2. Initialize the map with error handling
+  const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/sairagul/cm1i159b300b701qtgepk223k',
+    // Verify this style exists!
     scrollZoom: false
-    // interactive: false
   });
+
+  // 3. Handle map loading errors
+  map.on('error', e => {
+    console.error('Mapbox Error:', e.error);
+    // Fallback to a default style if custom style fails
+    map.setStyle('mapbox://styles/mapbox/streets-v11').catch(err => console.error('Failed to load fallback style:', err));
+  });
+
+  // 4. Fit bounds to locations
   const bounds = new mapboxgl.LngLatBounds();
   locations.forEach(loc => {
     // Create marker
@@ -24064,14 +24072,16 @@ const Map = locations => {
       anchor: 'bottom'
     }).setLngLat(loc.coordinates).addTo(map);
 
-    // Adding popup
+    // Add popup
     new mapboxgl.Popup({
       offset: 30
     }).setLngLat(loc.coordinates).setHTML(`<p>Day ${loc.day}: ${loc.description}<p>`).addTo(map);
 
-    // Extend map bounds to include current location
+    // Extend bounds
     bounds.extend(loc.coordinates);
   });
+
+  // 5. Adjust map view to fit markers
   map.fitBounds(bounds, {
     padding: {
       top: 200,
@@ -24140,6 +24150,40 @@ const bookTour = async tourId => {
   }
 };
 exports.bookTour = bookTour;
+},{"axios":"../../node_modules/axios/index.js","./alert":"alert.js"}],"likeButton.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.toggleLikeTour = void 0;
+var _axios = _interopRequireDefault(require("axios"));
+var _alert = require("./alert");
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+const toggleLikeTour = async (tourId, button) => {
+  try {
+    const res = await (0, _axios.default)({
+      method: 'POST',
+      url: `http://127.0.0.1:3000/api/v1/bookings/like/${tourId}`
+    });
+    if (res.data.status === 'success') {
+      const liked = res.data.data.likes === 1; // Check if the tour is liked
+      (0, _alert.showAlert)('success', liked ? 'Tour liked successfully' : 'Like removed');
+
+      // Toggle the heart icon appearance
+      if (liked) {
+        button.classList.add('liked');
+      } else {
+        button.classList.remove('liked');
+      }
+    } else {
+      (0, _alert.showAlert)('error', 'You must book the tour to like it.');
+    }
+  } catch (err) {
+    (0, _alert.showAlert)('error', err.response?.data?.message || 'Failed to like the tour');
+  }
+};
+exports.toggleLikeTour = toggleLikeTour;
 },{"axios":"../../node_modules/axios/index.js","./alert":"alert.js"}],"in.js":[function(require,module,exports) {
 "use strict";
 
@@ -24150,87 +24194,137 @@ require("regenerator-runtime/runtime");
 var _mapBox = require("./mapBox");
 var _updateSettings = require("./updateSettings");
 var _stripe = require("./stripe");
+var _likeButton = require("./likeButton");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-// import '@babel/polyfill'
-
-//Login purpose
+// DOM Elements
 const loginForm = document.querySelector('.form--login');
 const signupForm = document.querySelector('.form--signup');
 const mapBox = document.getElementById('map');
 const userDataForm = document.querySelector('.form-user-data');
 const userPasswordForm = document.querySelector('.form-user-password');
 const bookBtn = document.getElementById('book-tour');
+const likeBtns = document.querySelectorAll('.btn--like');
+
+// Map rendering
 if (mapBox) {
   const locations = JSON.parse(mapBox.dataset.locations);
   (0, _mapBox.Map)(locations);
 }
 
-// Assuming signupForm and loginForm are already defined
+// Signup form submission
+// Signup form submission
 if (signupForm) {
-  signupForm.addEventListener('submit', e => {
+  signupForm.addEventListener('submit', async e => {
     e.preventDefault();
-    const name = document.getElementById('signupName').value; // Updated ID
-    const email = document.getElementById('signupEmail').value; // Updated ID
-    const password = document.getElementById('signupPassword').value; // Updated ID
-    const passwordConfirmation = document.getElementById('signupPasswordConfirmation').value; // Updated ID
-    (0, _signup.default)(name, email, password, passwordConfirmation);
+    const submitBtn = document.querySelector('.btn--green');
+    const originalText = submitBtn.textContent;
+
+    // Disable button and show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account...';
+    try {
+      const name = document.getElementById('signupName').value;
+      const email = document.getElementById('signupEmail').value;
+      const password = document.getElementById('signupPassword').value;
+      const passwordConfirmation = document.getElementById('signupPasswordConfirmation').value;
+
+      // Client-side validation
+      if (password !== passwordConfirmation) {
+        throw new Error('Passwords do not match');
+      }
+      await (0, _signup.default)(name, email, password, passwordConfirmation);
+    } catch (error) {
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+      showAlert('error', error.message);
+    }
   });
-} else {
-  console.log('Failed to send signup data');
 }
+
+// Login form submission
 if (loginForm) {
   loginForm.addEventListener('submit', e => {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value; // Updated ID
-    const password = document.getElementById('loginPassword').value; // Updated ID
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
     (0, _login.login)(email, password);
   });
-} else {
-  console.error('Form element not found!');
 }
 
-// This thing is used for logut purpose...
+// Logout event listener
 document.addEventListener('DOMContentLoaded', () => {
   const logOutBtn = document.querySelector('.nav__el--logout');
   if (logOutBtn) {
     logOutBtn.addEventListener('click', _login.logout);
-  } else {
-    console.error('Logout button not found!');
   }
 });
-if (userDataForm) userDataForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const form = new FormData();
-  form.append('name', document.getElementById('name').value);
-  form.append('email', document.getElementById('email').value);
-  form.append('photo', document.getElementById('photo').files[0]);
-  console.log(form);
-  (0, _updateSettings.updateSettings)(form, 'data');
-});
-if (userPasswordForm) userPasswordForm.addEventListener('submit', async e => {
-  document.querySelector('.btn--save--password').textContent = 'Updating...';
-  e.preventDefault();
-  const passwordCurrent = document.getElementById('password-current').value;
-  const password = document.getElementById('password').value;
-  const passwordConfirmation = document.getElementById('password-confirm').value;
-  await (0, _updateSettings.updateSettings)({
-    passwordCurrent,
-    password,
-    passwordConfirmation
-  }, 'password');
-  document.querySelector('.btn--save--password').textContent = 'Save Password';
-  document.getElementById('password-current').value = '';
-  document.getElementById('password').value = '';
-  document.getElementById('password-confirm').value = '';
-});
-if (bookBtn) bookBtn.addEventListener('click', e => {
-  e.target.textContent = 'Processing..';
-  const {
-    tourId
-  } = e.target.dataset;
-  (0, _stripe.bookTour)(tourId);
-});
-},{"./login":"login.js","./signup":"signup.js","core-js/stable":"../../node_modules/core-js/stable/index.js","regenerator-runtime/runtime":"../../node_modules/regenerator-runtime/runtime.js","./mapBox":"mapBox.js","./updateSettings":"updateSettings.js","./stripe":"stripe.js"}],"../../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+
+// Update user data
+if (userDataForm) {
+  userDataForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const form = new FormData();
+    form.append('name', document.getElementById('name').value);
+    form.append('email', document.getElementById('email').value);
+    form.append('photo', document.getElementById('photo').files[0]);
+    (0, _updateSettings.updateSettings)(form, 'data');
+  });
+}
+
+// Update user password
+if (userPasswordForm) {
+  userPasswordForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    document.querySelector('.btn--save--password').textContent = 'Updating...';
+    const passwordCurrent = document.getElementById('password-current').value;
+    const password = document.getElementById('password').value;
+    const passwordConfirmation = document.getElementById('password-confirm').value;
+    await (0, _updateSettings.updateSettings)({
+      passwordCurrent,
+      password,
+      passwordConfirmation
+    }, 'password');
+    document.querySelector('.btn--save--password').textContent = 'Save Password';
+    document.getElementById('password-current').value = '';
+    document.getElementById('password').value = '';
+    document.getElementById('password-confirm').value = '';
+  });
+}
+
+// Book tour
+if (bookBtn) {
+  bookBtn.addEventListener('click', e => {
+    e.target.textContent = 'Processing...';
+    const {
+      tourId
+    } = e.target.dataset;
+    (0, _stripe.bookTour)(tourId);
+  });
+}
+
+//likeUpdation
+
+if (likeBtns) {
+  likeBtns.forEach(btn => {
+    btn.addEventListener('click', async e => {
+      const button = e.currentTarget; // Get the button itself
+      const tourId = button.dataset.tourId; // Get tour ID from dataset
+
+      try {
+        const liked = await (0, _likeButton.likeTour)(tourId); // Call API and get liked status
+
+        // Update button UI based on like status
+        button.innerHTML = liked ? '<svg class="card__icon"><use xlink:href="/img/icons.svg#icon-heart-filled"></use></svg>' : '<svg class="card__icon"><use xlink:href="/img/icons.svg#icon-heart"></use></svg>';
+
+        // Toggle class for styling
+        button.classList.toggle('liked', liked);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  });
+}
+},{"./login":"login.js","./signup":"signup.js","core-js/stable":"../../node_modules/core-js/stable/index.js","regenerator-runtime/runtime":"../../node_modules/regenerator-runtime/runtime.js","./mapBox":"mapBox.js","./updateSettings":"updateSettings.js","./stripe":"stripe.js","./likeButton":"likeButton.js"}],"../../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -24255,7 +24349,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63343" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59987" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

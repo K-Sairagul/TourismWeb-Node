@@ -23,6 +23,6 @@ exports.setTourId=(req,res,next)=>{
 }
 
 exports.createReview = factoy.CreateOne(Review);
-exports.deleteReview=factoy.deleteOne(Review);
-exports.updateReview=factoy.updateone(Review);
-exports.GetallReview=factoy.Getall(Review);
+exports.deleteReview=factoy.DeleteOne(Review);
+exports.updateReview=factoy.UpdateOne(Review);
+exports.GetallReview=factoy.GetAll(Review);

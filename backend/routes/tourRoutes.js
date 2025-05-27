@@ -7,6 +7,7 @@ const reviewRouter=require('./../routes/reviewRoutes');
 
 const tourRouter = express.Router();
 
+
 tourRouter
  .route('')
  .get(tourController.Getalltour)

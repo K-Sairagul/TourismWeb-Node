@@ -1,12 +1,16 @@
-const Tour = require('./../models/tourmodel');
+const Tour = require('./../models/tourModel');
+const User = require('./../models/userModel');
+
 const factoy=require('./handlerFactory');
 const multer=require('multer');
 const AppError=require('./../utils/appError');
+const Booking = require('./../models/bookingModel');
 
-exports.getTour = factoy.getOne(Tour,{path:'reviews'})
-exports.updateTour = factoy.updateone(Tour);
-exports.deleteTour = factoy.deleteOne(Tour);
-exports.Getalltour = factoy.Getall(Tour);
+
+exports.getTour = factoy.GetOne(Tour,{path:'reviews'})
+exports.updateTour = factoy.UpdateOne(Tour);
+exports.deleteTour = factoy.DeleteOne(Tour);
+exports.Getalltour = factoy.GetAll(Tour);
 exports.createTour = factoy.CreateOne(Tour);
 
 const multerStorage = multer.diskStorage({
@@ -55,4 +59,57 @@ const multerStorage = multer.diskStorage({
     // Proceed to the next middleware
     next();
   };
+
+  // tourController.js
+
+
+
+
+//Like tour functionality
+exports.likeTour = async (req, res, next) => {
+  try {
+    // 1. Check if the user has booked the tour
+    const booking = await Booking.findOne({ user: req.user.id, tour: req.params.id });
+    
+    if (!booking) {
+      return res.status(403).json({
+        status: 'fail',
+        message: 'You can only like a tour that you have booked.'
+      });
+    }
+
+    // 2. Check if the user has already liked this tour
+    const user = await User.findById(req.user.id);
+    if (user.likedTours.includes(req.params.id)) {
+      return res.status(400).json({
+        status: 'fail',
+        message: 'You have already liked this tour.'
+      });
+    }
+
+    // 3. Increment the tour's like count and add tour to user's likedTours
+    const tour = await Tour.findByIdAndUpdate(req.params.id, {
+      $inc: { likes: 1 } // Increment the likes by 1
+    }, {
+      new: true // Return the updated tour
+    });
+
+    // Add tour to user's liked tours
+    user.likedTours.push(req.params.id);
+    await user.save();
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        likes: tour.likes
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Error liking the tour'
+    });
+  }
+};
+
   
