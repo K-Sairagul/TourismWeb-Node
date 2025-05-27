@@ -1,5 +1,5 @@
 const stripePackage = require('stripe');
-const Tour = require('../models/tourModel');
+const Tour = require('../models/tourmodel');
 const Booking = require('../models/bookingModel');
 const User = require('../models/userModel');
 const factory = require('./handlerFactory');
